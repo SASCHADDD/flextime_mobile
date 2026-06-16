@@ -2,7 +2,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const Pengguna = require('./penggunamodel');
-const Gerakan = require('./GerakanModel');
 
 const RiwayatKepatuhan = sequelize.define('RiwayatKepatuhan', {
     id: {
@@ -12,48 +11,38 @@ const RiwayatKepatuhan = sequelize.define('RiwayatKepatuhan', {
     },
     pengguna_id: {
         type: DataTypes.INTEGER,
+        field: 'id_pengguna',
         allowNull: false,
         references: {
-            model: 'pengguna', // Menghubungkan ke nama tabel fisik pengguna di MySQL
+            model: 'pengguna',
             key: 'id'
         },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
     },
-    gerakan_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: 'gerakan', // Menghubungkan ke nama tabel fisik gerakan di MySQL
-            key: 'id'
-        },
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'
+    tanggal: {
+        type: DataTypes.DATEONLY,
+        allowNull: false
     },
     sesi: {
         type: DataTypes.ENUM('Pagi', 'Siang', 'Sore'),
+        field: 'periode_sesi',
         allowNull: false
     },
     status_kepatuhan: {
         type: DataTypes.ENUM('Melakukan', 'Tidak'),
+        field: 'status',
         allowNull: false,
         defaultValue: 'Tidak'
-    },
-    durasi_detik: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 0 // Menyimpan total durasi latihan dalam hitungan detik
     }
 }, {
-    tableName: 'riwayat_kepatuhan', // Nama tabel sesuai pangkalan data Anda
+    tableName: 'riwayat_kepatuhan',
     timestamps: true,
     createdAt: 'dibuat_pada',
-    updatedAt: 'diperbarui_pada'
+    updatedAt: false
 });
 
 // MEMBENTUK RELASI (ASSOCIATIONS) DI SEQUELIZE
-// Ini sangat penting agar Admin bisa menggunakan fitur .findAll({ include: [...] })
-RiwayatKepatuhan.belongsTo(Pengguna, { foreignKey: 'pengguna_id', as: 'pengguna' });
-RiwayatKepatuhan.belongsTo(Gerakan, { foreignKey: 'gerakan_id', as: 'gerakan' });
+RiwayatKepatuhan.belongsTo(Pengguna, { foreignKey: 'id_pengguna', as: 'pengguna' });
 
 module.exports = RiwayatKepatuhan;
