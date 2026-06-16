@@ -8,6 +8,9 @@ const { verifyToken, verifyAdmin } = require('../middlewares/authMiddleware');
 // Wajib pakai verifyToken agar req.user.id di Controller terbaca
 router.post('/', verifyToken, riwayatController.create);
 
+// 2. Rute User (GET): Mengambil riwayat sendiri
+router.get('/', verifyToken, riwayatController.getMine);
+
 // 2. Rute Admin (GET): Melihat laporan riwayat pengguna tertentu
 // Dijaga super ketat oleh verifyAdmin
 router.get('/pengguna/:id', verifyToken, verifyAdmin, riwayatController.getByPengguna);

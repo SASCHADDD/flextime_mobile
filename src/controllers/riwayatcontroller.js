@@ -5,13 +5,11 @@ const riwayatController = {
     // [USER] Fungsi untuk menyimpan riwayat setelah sesi latihan selesai
     create: async (req, res) => {
         try {
-            // Kita rakit data yang akan disimpan
             const dataInput = {
-                pengguna_id: req.user.id, // Diambil dari JWT Middleware agar aman dari manipulasi
-                gerakan_id: req.body.gerakan_id,
+                pengguna_id: req.pengguna.id, // Diambil dari JWT Middleware
+                tanggal: req.body.tanggal || new Date().toISOString().split('T')[0],
                 sesi: req.body.sesi,      // Wajib diisi: 'Pagi', 'Siang', atau 'Sore'
-                status_kepatuhan: req.body.status_kepatuhan || 'Melakukan',
-                durasi_detik: req.body.durasi_detik || 0
+                status_kepatuhan: req.body.status_kepatuhan || 'Melakukan'
             };
 
             const riwayatBaru = await riwayatService.createRiwayat(dataInput);
@@ -23,6 +21,21 @@ const riwayatController = {
             });
         } catch (error) {
             res.status(400).json({ success: false, message: error.message });
+        }
+    },
+
+    // [USER] Menarik riwayat milik sendiri
+    getMine: async (req, res) => {
+        try {
+            const idPengguna = req.pengguna.id;
+            const rows = await riwayatService.getRiwayatKu(idPengguna);
+            res.status(200).json({
+                success: true,
+                message: 'Riwayat kepatuhan berhasil ditarik.',
+                data: rows
+            });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
         }
     },
 

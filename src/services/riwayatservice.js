@@ -12,6 +12,18 @@ const riwayatService = {
         }
     },
 
+    // [USER] Menarik riwayat milik sendiri
+    getRiwayatKu: async (idPengguna) => {
+        try {
+            return await RiwayatKepatuhan.findAll({
+                where: { pengguna_id: idPengguna },
+                order: [['dibuat_pada', 'DESC']]
+            });
+        } catch (error) {
+            throw new Error('Gagal mengambil riwayat kepatuhan: ' + error.message);
+        }
+    },
+
     // [ADMIN] Menarik riwayat berdasarkan ID dengan Pagination
     getRiwayatByPengguna: async (idPengguna, page = 1, limit = 15) => {
         try {
@@ -21,14 +33,7 @@ const riwayatService = {
                 where: { pengguna_id: idPengguna },
                 limit: parseInt(limit),
                 offset: parseInt(offset),
-                order: [['dibuat_pada', 'DESC']], // Urutkan dari sesi latihan yang paling baru
-                include: [
-                    {
-                        model: Gerakan,
-                        as: 'gerakan',
-                        attributes: ['nama_gerakan', 'gambar'] // Hanya ambil kolom yang diperlukan
-                    }
-                ]
+                order: [['dibuat_pada', 'DESC']] // Urutkan dari sesi latihan yang paling baru
             });
         } catch (error) {
             throw new Error('Gagal mengambil riwayat kepatuhan: ' + error.message);
