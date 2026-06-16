@@ -34,11 +34,23 @@ class AuthRepository {
 
   // FUNGSI REGISTER
   // Mendaftarkan pengguna baru ke database
-  Future<void> register(String namaLengkap, String email, String password) async {
+  Future<void> register(
+    String namaLengkap,
+    String email,
+    String password,
+    String waktuMulaiKerja,
+    String waktuSelesaiKerja,
+    String waktuMulaiIstirahat,
+    String waktuSelesaiIstirahat,
+  ) async {
     await apiProvider.post('/auth/register', {
       'nama_lengkap': namaLengkap, 
       'email': email,
       'kata_sandi': password,
+      'waktu_mulai_kerja': waktuMulaiKerja,
+      'waktu_selesai_kerja': waktuSelesaiKerja,
+      'waktu_mulai_istirahat': waktuMulaiIstirahat,
+      'waktu_selesai_istirahat': waktuSelesaiIstirahat,
     });
   }
 
