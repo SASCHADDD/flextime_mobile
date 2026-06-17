@@ -65,13 +65,26 @@ const authService = {
             { expiresIn: '7d' }
         );
 
+        const timeUtil = require('../utils/timeUtil');
+        const jadwal_microbreak = timeUtil.calculateMicrobreaks(
+            user.jam_masuk_kerja,
+            user.jam_keluar_kerja,
+            user.jam_mulai_istirahat,
+            user.jam_selesai_istirahat
+        );
+
         return {
             token,
             user: {
                 id: user.id,
                 nama_lengkap: user.nama_lengkap,
                 email: user.email,
-                peran: user.peran
+                peran: user.peran,
+                jam_masuk_kerja: user.jam_masuk_kerja,
+                jam_keluar_kerja: user.jam_keluar_kerja,
+                jam_mulai_istirahat: user.jam_mulai_istirahat,
+                jam_selesai_istirahat: user.jam_selesai_istirahat,
+                jadwal_microbreak: jadwal_microbreak
             }
         };
     }
