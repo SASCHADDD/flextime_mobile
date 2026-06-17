@@ -5,12 +5,14 @@ class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
   final VoidCallback onCenterButtonTap;
+  final bool isFlexTimeButtonActive;
 
   const CustomBottomNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
     required this.onCenterButtonTap,
+    this.isFlexTimeButtonActive = true,
   });
 
   @override
@@ -44,22 +46,26 @@ class CustomBottomNavBar extends StatelessWidget {
           Positioned(
             top: -24,
             child: GestureDetector(
-              onTap: onCenterButtonTap,
+              onTap: isFlexTimeButtonActive ? onCenterButtonTap : () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Belum waktunya FlexTime atau Sesi sudah selesai!')),
+                );
+              },
               child: Column(
                 children: [
                   Container(
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF00ACC1),
+                      color: isFlexTimeButtonActive ? const Color(0xFF00ACC1) : Colors.grey[800],
                       borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
+                      boxShadow: isFlexTimeButtonActive ? [
                         BoxShadow(
                           color: const Color(0xFF00ACC1).withValues(alpha: 0.6),
                           blurRadius: 20,
                           spreadRadius: 4,
                         ),
-                      ],
+                      ] : [],
                     ),
                     child: const Center(
                       child: Text(
@@ -77,7 +83,7 @@ class CustomBottomNavBar extends StatelessWidget {
                   Text(
                     'FlexTime!',
                     style: GoogleFonts.inter(
-                      color: const Color(0xFF00ACC1),
+                      color: isFlexTimeButtonActive ? const Color(0xFF00ACC1) : Colors.grey[600],
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                     ),
