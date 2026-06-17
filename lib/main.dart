@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flextime_mobile/services/notification_service.dart';
 import 'ui/pages/auth/login_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService().init();
   runApp(const MyApp());
 }
 
