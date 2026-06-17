@@ -6,8 +6,27 @@ const riwayatService = {
     // [USER] Menyimpan riwayat baru ke MySQL
     createRiwayat: async (data) => {
         try {
+            // Validasi: Cek apakah sesi untuk tanggal ini sudah tercatat sebelumnya
+            const existing = await RiwayatKepatuhan.findOne({
+                where: {
+                    pengguna_id: data.pengguna_id,
+                    tanggal: data.tanggal,
+                    sesi: data.sesi
+                }
+            });
+
+            if (existing) {
+                // Jika sudah ada, lempar error tanpa stacktrace berlebih
+                const err = new Error(`Riwayat untuk sesi ${data.sesi} pada hari ini sudah tersimpan.`);
+                err.isDuplicate = true;
+                throw err;
+            }
+
             return await RiwayatKepatuhan.create(data);
         } catch (error) {
+            if (error.isDuplicate) {
+                throw error;
+            }
             throw new Error('Gagal mencatat riwayat latihan: ' + error.message);
         }
     },

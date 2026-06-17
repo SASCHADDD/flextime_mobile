@@ -25,7 +25,7 @@ const RiwayatKepatuhan = sequelize.define('RiwayatKepatuhan', {
         allowNull: false
     },
     sesi: {
-        type: DataTypes.ENUM('Pagi', 'Siang', 'Sore'),
+        type: DataTypes.ENUM('Pagi', 'Siang', 'Sore', 'Sesi 1', 'Sesi 2', 'Sesi 3'),
         field: 'periode_sesi',
         allowNull: false
     },

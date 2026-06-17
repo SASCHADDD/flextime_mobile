@@ -5,6 +5,11 @@ const riwayatController = {
     // [USER] Fungsi untuk menyimpan riwayat setelah sesi latihan selesai
     create: async (req, res) => {
         try {
+            const validSesi = ['Pagi', 'Siang', 'Sore', 'Sesi 1', 'Sesi 2', 'Sesi 3'];
+            if (!validSesi.includes(req.body.sesi)) {
+                return res.status(400).json({ message: 'Sesi tidak valid.' });
+            }
+
             const dataInput = {
                 pengguna_id: req.pengguna.id, // Diambil dari JWT Middleware
                 tanggal: req.body.tanggal || new Date().toISOString().split('T')[0],
