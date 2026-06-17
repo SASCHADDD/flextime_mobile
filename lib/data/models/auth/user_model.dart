@@ -9,6 +9,7 @@ class UserModel extends Equatable {
   final String jamMulaiIstirahat;
   final String jamSelesaiIstirahat;
   final String peran;
+  final List<String> jadwalMicrobreak;
 
   const UserModel({
     required this.id,
@@ -19,6 +20,7 @@ class UserModel extends Equatable {
     required this.jamMulaiIstirahat,
     required this.jamSelesaiIstirahat,
     required this.peran,
+    required this.jadwalMicrobreak,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,10 @@ class UserModel extends Equatable {
       jamMulaiIstirahat: json['jam_mulai_istirahat'] ?? '12:00:00',
       jamSelesaiIstirahat: json['jam_selesai_istirahat'] ?? '13:00:00',
       peran: json['peran'] ?? 'user',
+      jadwalMicrobreak: (json['jadwal_microbreak'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
     );
   }
 
@@ -44,6 +50,7 @@ class UserModel extends Equatable {
         jamMulaiIstirahat,
         jamSelesaiIstirahat,
         peran,
+        jadwalMicrobreak,
       ];
 }
 

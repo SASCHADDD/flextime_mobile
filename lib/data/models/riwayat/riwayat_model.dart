@@ -7,6 +7,7 @@ class RiwayatModel extends Equatable {
   final String sesi;
   final String statusKepatuhan;
   final int durasiDetik;
+  final String? tanggal; // <-- ADDED
   final String? dibuatPada;
   final String? diperbaruiPada;
 
@@ -21,6 +22,7 @@ class RiwayatModel extends Equatable {
     required this.sesi,
     required this.statusKepatuhan,
     required this.durasiDetik,
+    this.tanggal, // <-- ADDED
     this.dibuatPada,
     this.diperbaruiPada,
     this.namaPengguna,
@@ -41,6 +43,7 @@ class RiwayatModel extends Equatable {
       durasiDetik: json['durasi_detik'] != null 
           ? int.tryParse(json['durasi_detik'].toString()) ?? 0 
           : 0,
+      tanggal: json['tanggal'], // <-- ADDED
       dibuatPada: json['dibuat_pada'],
       diperbaruiPada: json['diperbarui_pada'],
       
@@ -58,6 +61,7 @@ class RiwayatModel extends Equatable {
         sesi,
         statusKepatuhan,
         durasiDetik,
+        tanggal, // <-- ADDED
         dibuatPada,
         diperbaruiPada,
         namaPengguna,
