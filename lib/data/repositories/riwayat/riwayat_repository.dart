@@ -16,4 +16,17 @@ class RiwayatRepository {
     
     return data.map((json) => RiwayatModel.fromJson(json)).toList();
   }
+
+  Future<void> tambahRiwayat(Map<String, dynamic> data) async {
+    await apiProvider.post('/riwayat', data);
+  }
+
+  Future<List<RiwayatModel>> getRiwayatByPengguna(int penggunaId) async {
+    final responseRaw = await apiProvider.get('/riwayat/pengguna/$penggunaId');
+    
+    // Pastikan backend mengirimkan data dalam bentuk array
+    final List<dynamic> data = responseRaw['data'] ?? responseRaw;
+    
+    return data.map((json) => RiwayatModel.fromJson(json)).toList();
+  }
 }

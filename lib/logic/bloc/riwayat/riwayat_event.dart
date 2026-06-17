@@ -15,3 +15,21 @@ class FetchRiwayatRequested extends RiwayatEvent {
   @override
   List<Object?> get props => [filter];
 }
+
+class FetchRiwayatAdminRequested extends RiwayatEvent {
+  final int penggunaId;
+
+  const FetchRiwayatAdminRequested(this.penggunaId);
+
+  @override
+  List<Object?> get props => [penggunaId];
+}
+
+class TambahRiwayatRequested extends RiwayatEvent {
+  final Map<String, dynamic> data;
+
+  const TambahRiwayatRequested(this.data);
+
+  @override
+  List<Object?> get props => [data];
+}

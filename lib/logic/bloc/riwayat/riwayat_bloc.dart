@@ -8,6 +8,8 @@ class RiwayatBloc extends Bloc<RiwayatEvent, RiwayatState> {
 
   RiwayatBloc({required this.riwayatRepository}) : super(RiwayatInitial()) {
     on<FetchRiwayatRequested>(_onFetchRiwayatRequested);
+    on<FetchRiwayatAdminRequested>(_onFetchRiwayatAdminRequested);
+    on<TambahRiwayatRequested>(_onTambahRiwayatRequested);
   }
 
   Future<void> _onFetchRiwayatRequested(FetchRiwayatRequested event, Emitter<RiwayatState> emit) async {
@@ -22,6 +24,30 @@ class RiwayatBloc extends Bloc<RiwayatEvent, RiwayatState> {
       } else {
         emit(RiwayatError(e.toString().replaceAll('Exception: ', '')));
       }
+    }
+  }
+
+  Future<void> _onFetchRiwayatAdminRequested(FetchRiwayatAdminRequested event, Emitter<RiwayatState> emit) async {
+    emit(RiwayatLoading());
+    try {
+      final riwayatList = await riwayatRepository.getRiwayatByPengguna(event.penggunaId);
+      emit(RiwayatLoaded(riwayatList));
+    } catch (e) {
+      if (e.toString().contains('DOCTYPE html')) {
+        emit(const RiwayatError('Gagal memuat laporan aktivitas: Endpoint backend belum aktif.'));
+      } else {
+        emit(RiwayatError(e.toString().replaceAll('Exception: ', '')));
+      }
+    }
+  }
+
+  Future<void> _onTambahRiwayatRequested(TambahRiwayatRequested event, Emitter<RiwayatState> emit) async {
+    try {
+      await riwayatRepository.tambahRiwayat(event.data);
+      // Refresh riwayat secara otomatis setelah nambah
+      add(const FetchRiwayatRequested(filter: 'harian'));
+    } catch (e) {
+      emit(RiwayatError('Gagal menyimpan: $e'));
     }
   }
 }
