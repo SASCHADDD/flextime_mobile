@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:flextime_mobile/data/providers/api_provider.dart';
-import 'package:flextime_mobile/data/repositories/riwayat/riwayat_repository.dart';
 import 'package:flextime_mobile/logic/bloc/riwayat/riwayat_bloc.dart';
 import 'package:flextime_mobile/logic/bloc/riwayat/riwayat_event.dart';
 import 'package:flextime_mobile/logic/bloc/riwayat/riwayat_state.dart';
@@ -20,28 +18,23 @@ class _LaporanPageState extends State<LaporanPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => RiwayatBloc(
-        riwayatRepository: RiwayatRepository(apiProvider: ApiProvider()),
-      )..add(const FetchRiwayatRequested(filter: 'harian')),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 48),
-              Builder(builder: (context) => _buildRiwayatHeader(context)),
-              const SizedBox(height: 24),
-              
-              Builder(builder: (context) => _buildRiwayatContent(context)),
-              
-              const SizedBox(height: 48),
-              _buildLoadMoreButton(),
-              const SizedBox(height: 100), // spacing for bottom nav
-            ],
-          ),
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 48),
+            Builder(builder: (context) => _buildRiwayatHeader(context)),
+            const SizedBox(height: 24),
+            
+            Builder(builder: (context) => _buildRiwayatContent(context)),
+            
+            const SizedBox(height: 48),
+            _buildLoadMoreButton(),
+            const SizedBox(height: 100), // spacing for bottom nav
+          ],
         ),
       ),
     );

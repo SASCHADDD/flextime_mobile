@@ -7,6 +7,11 @@ import 'package:flextime_mobile/data/repositories/tips/tips_repository.dart';
 import 'package:flextime_mobile/logic/bloc/tips/tips_bloc.dart';
 import 'package:flextime_mobile/logic/bloc/tips/tips_event.dart';
 import 'package:flextime_mobile/logic/bloc/tips/tips_state.dart';
+import 'package:flextime_mobile/logic/bloc/pengguna/pengguna_bloc.dart';
+import 'package:flextime_mobile/logic/bloc/pengguna/pengguna_state.dart';
+import 'package:flextime_mobile/logic/bloc/riwayat/riwayat_bloc.dart';
+import 'package:flextime_mobile/logic/bloc/riwayat/riwayat_state.dart';
+import 'package:flextime_mobile/utils/time_util.dart';
 
 class BerandaPage extends StatelessWidget {
   final String namaPengguna;
@@ -22,29 +27,24 @@ class BerandaPage extends StatelessWidget {
       create: (context) => TipsBloc(
         tipsRepository: TipsRepository(apiProvider: ApiProvider()),
       )..add(FetchTipsRequested()),
-      child: SafeArea(
-        child: SingleChildScrollView(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildHeader(),
             const SizedBox(height: 32),
-            _buildPencapaianCard(),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: _buildInfoCard('SESI SELANJUTNYA', '14:00', Icons.access_time_rounded)),
-                const SizedBox(width: 16),
-                Expanded(child: _buildInfoCard('MELEWATKAN SESI', '4', Icons.local_fire_department_rounded, subtext: 'KALI')),
-              ],
-            ),
+            _buildDashboardStats(context),
             const SizedBox(height: 16),
             Builder(builder: (context) => _buildTipsCard(context)),
             const SizedBox(height: 100), // spacing for bottom nav
           ],
         ),
       ),
+        ),
       ),
     );
   }
@@ -56,22 +56,24 @@ class BerandaPage extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Selamat Pagi,',
-              style: GoogleFonts.inter(
-                color: Colors.grey[500],
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
             const SizedBox(height: 4),
-            Text(
-              'Halo, $namaPengguna',
-              style: GoogleFonts.inter(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+            BlocBuilder<PenggunaBloc, PenggunaState>(
+              builder: (context, state) {
+                String name = namaPengguna;
+                if (state is PenggunaProfilLoaded) {
+                  name = state.user.namaLengkap;
+                } else if (state is PenggunaUpdateSuccess) {
+                  name = state.user.namaLengkap;
+                }
+                return Text(
+                  'Halo, $name',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -104,7 +106,70 @@ class BerandaPage extends StatelessWidget {
     );
   }
 
-  Widget _buildPencapaianCard() {
+  Widget _buildDashboardStats(BuildContext context) {
+    return BlocBuilder<PenggunaBloc, PenggunaState>(
+      builder: (context, penggunaState) {
+        List<String> jadwal = [];
+
+        if (penggunaState is PenggunaProfilLoaded) {
+          jadwal = penggunaState.user.jadwalMicrobreak;
+        } else if (penggunaState is PenggunaUpdateSuccess) {
+          jadwal = penggunaState.user.jadwalMicrobreak;
+        }
+
+        // Cari Sesi Selanjutnya menggunakan Utility Class
+        String nextSessionTime = TimeUtil.getNextSessionTime(jadwal);
+
+        return BlocBuilder<RiwayatBloc, RiwayatState>(
+          builder: (context, riwayatState) {
+            bool isPagiDone = false;
+            bool isSiangDone = false;
+            bool isSoreDone = false;
+            int missedCount = 0;
+
+            if (riwayatState is RiwayatLoaded) {
+              final today = DateTime.now().toIso8601String().split('T')[0];
+              final riwayatsToday = riwayatState.riwayatList.where((r) => r.tanggal == today || (r.dibuatPada != null && r.dibuatPada!.startsWith(today))).toList();
+
+              isPagiDone = riwayatsToday.any((r) => (r.sesi.toLowerCase() == 'pagi' || r.sesi.toLowerCase() == 'sesi 1') && r.statusKepatuhan.toLowerCase() == 'melakukan');
+              isSiangDone = riwayatsToday.any((r) => (r.sesi.toLowerCase() == 'siang' || r.sesi.toLowerCase() == 'sesi 2') && r.statusKepatuhan.toLowerCase() == 'melakukan');
+              isSoreDone = riwayatsToday.any((r) => (r.sesi.toLowerCase() == 'sore' || r.sesi.toLowerCase() == 'sesi 3') && r.statusKepatuhan.toLowerCase() == 'melakukan');
+
+              // missedCount calculation (overall)
+              missedCount = riwayatState.riwayatList.where((r) => r.statusKepatuhan.toLowerCase() == 'terlewat').length;
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildPencapaianCard(isPagiDone, isSiangDone, isSoreDone, jadwal),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(child: _buildInfoCard('SESI SELANJUTNYA', nextSessionTime, Icons.access_time_rounded)),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildInfoCard('MELEWATKAN SESI', missedCount.toString(), Icons.local_fire_department_rounded, subtext: 'KALI')),
+                  ],
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+
+  Widget _buildPencapaianCard(bool isPagiDone, bool isSiangDone, bool isSoreDone, List<String> jadwal) {
+    String getFormattedTime(int index) {
+      if (jadwal.length > index) {
+        String t = jadwal[index];
+        return t.length > 5 ? t.substring(0, 5) : t;
+      }
+      return '--:--';
+    }
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -128,7 +193,7 @@ class BerandaPage extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Pencapaian',
+                        'Task Harian',
                         style: GoogleFonts.inter(
                           color: Colors.white,
                           fontSize: 18,
@@ -140,53 +205,17 @@ class BerandaPage extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00838F).withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        'Harian',
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF00ACC1),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      child: Text(
-                        'Mingguan',
-                        style: GoogleFonts.inter(
-                          color: Colors.grey[500],
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+
             ],
           ),
           const SizedBox(height: 32),
           Row(
             children: [
-              _buildProgressSegment(true, 'Sesi 1'),
+              _buildProgressSegment(isPagiDone, 'Sesi 1', getFormattedTime(0)),
               const SizedBox(width: 12),
-              _buildProgressSegment(true, 'Sesi 2'),
+              _buildProgressSegment(isSiangDone, 'Sesi 2', getFormattedTime(1)),
               const SizedBox(width: 12),
-              _buildProgressSegment(false, 'Sesi 3'),
+              _buildProgressSegment(isSoreDone, 'Sesi 3', getFormattedTime(2)),
             ],
           ),
         ],
@@ -194,10 +223,19 @@ class BerandaPage extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressSegment(bool isActive, String label) {
+  Widget _buildProgressSegment(bool isActive, String label, String timeLabel) {
     return Expanded(
       child: Column(
         children: [
+          Text(
+            timeLabel,
+            style: GoogleFonts.inter(
+              color: isActive ? Colors.white : Colors.white70,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
           Container(
             height: 8,
             decoration: BoxDecoration(

@@ -9,6 +9,7 @@ import 'package:flextime_mobile/logic/bloc/auth/auth_bloc.dart';
 import 'package:flextime_mobile/logic/bloc/auth/auth_event.dart';
 import 'package:flextime_mobile/logic/bloc/auth/auth_state.dart';
 import '../dashboard/main_layout.dart';
+import '../admin/admin_main_layout.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -139,15 +140,24 @@ class _LoginPageState extends State<LoginPage> {
                       BlocConsumer<AuthBloc, AuthState>(
                         listener: (context, state) {
                           if (state is AuthAuthenticated) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => MainLayout(
-                                  namaPengguna:
-                                      state.user?.namaLengkap ?? 'Pengguna',
+                            final role = state.user?.peran ?? 'user';
+                            final nama = state.user?.namaLengkap ?? 'Pengguna';
+                            
+                            if (role == 'admin') {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AdminMainLayout(namaPengguna: nama),
                                 ),
-                              ),
-                            );
+                              );
+                            } else {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MainLayout(namaPengguna: nama),
+                                ),
+                              );
+                            }
                           } else if (state is AuthError) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text(state.message)),
