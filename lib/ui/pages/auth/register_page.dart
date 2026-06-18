@@ -9,6 +9,8 @@ import 'package:flextime_mobile/data/repositories/auth/auth_repository.dart';
 import 'package:flextime_mobile/logic/bloc/auth/auth_bloc.dart';
 import 'package:flextime_mobile/logic/bloc/auth/auth_event.dart';
 import 'package:flextime_mobile/logic/bloc/auth/auth_state.dart';
+import 'package:flextime_mobile/ui/widgets/custom_error_dialog.dart';
+import 'package:flextime_mobile/utils/snackbar_util.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -39,6 +41,10 @@ class _RegisterPageState extends State<RegisterPage> {
     _breakStartController.dispose();
     _breakEndController.dispose();
     super.dispose();
+  }
+
+  void _showErrorPopup(String message) {
+    CustomErrorDialog.show(context, message);
   }
 
   @override
@@ -129,11 +135,25 @@ class _RegisterPageState extends State<RegisterPage> {
                 hintText: 'Email',
                 controller: _emailController,
               ),
+              Padding(
+                padding: const EdgeInsets.only(left: 12.0, top: 8.0),
+                child: Text(
+                  '* Gunakan format email yang valid (contoh: nama@mail.com)',
+                  style: GoogleFonts.inter(color: Colors.grey[500], fontSize: 11),
+                ),
+              ),
               const SizedBox(height: 16),
               _buildTextField(
                 hintText: 'Kata Sandi',
                 controller: _passwordController,
                 isPassword: true,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 12.0, top: 8.0),
+                child: Text(
+                  '* Kata sandi minimal 6 karakter',
+                  style: GoogleFonts.inter(color: Colors.grey[500], fontSize: 11),
+                ),
               ),
               const SizedBox(height: 32),
 
@@ -199,14 +219,10 @@ class _RegisterPageState extends State<RegisterPage> {
               BlocConsumer<AuthBloc, AuthState>(
                 listener: (context, state) {
                   if (state is AuthRegisterSuccess) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Registrasi berhasil! Silakan login.')),
-                    );
+                    SnackBarUtil.showSuccess(context, 'Registrasi berhasil! Silakan login.');
                     Navigator.of(context).pop();
                   } else if (state is AuthError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(state.message)),
-                    );
+                    _showErrorPopup(state.message);
                   }
                 },
                 builder: (context, state) {
@@ -235,30 +251,41 @@ class _RegisterPageState extends State<RegisterPage> {
                               final bStart = _breakStartController.text.trim();
                               final bEnd = _breakEndController.text.trim();
 
-                              if (namaLengkap.isNotEmpty &&
-                                  email.isNotEmpty &&
-                                  password.isNotEmpty &&
-                                  wStart.isNotEmpty &&
-                                  wEnd.isNotEmpty &&
-                                  bStart.isNotEmpty &&
-                                  bEnd.isNotEmpty) {
-                                context.read<AuthBloc>().add(
-                                      AuthRegisterRequested(
-                                        namaLengkap,
-                                        email,
-                                        password,
-                                        wStart,
-                                        wEnd,
-                                        bStart,
-                                        bEnd,
-                                      ),
-                                    );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Harap isi semua kolom dengan benar.')),
-                                );
+                              if (namaLengkap.isEmpty || email.isEmpty || password.isEmpty || 
+                                  wStart.isEmpty || wEnd.isEmpty || bStart.isEmpty || bEnd.isEmpty) {
+                                _showErrorPopup('Harap isi semua kolom dengan lengkap.');
+                                return;
                               }
+
+                              final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                              if (!emailRegex.hasMatch(email)) {
+                                _showErrorPopup('Format email tidak valid.\nContoh: pengguna@mail.com');
+                                return;
+                              }
+
+                              if (password.length < 6) {
+                                _showErrorPopup('Kata sandi terlalu pendek. Minimal harus 6 karakter.');
+                                return;
+                              }
+
+                              final timeRegex = RegExp(r'^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$');
+                              if (!timeRegex.hasMatch(wStart) || !timeRegex.hasMatch(wEnd) || 
+                                  !timeRegex.hasMatch(bStart) || !timeRegex.hasMatch(bEnd)) {
+                                _showErrorPopup('Format waktu tidak valid.\nGunakan format 24 Jam (Contoh: 08:30 atau 17:00) dengan maksimal 23:59.');
+                                return;
+                              }
+
+                              context.read<AuthBloc>().add(
+                                    AuthRegisterRequested(
+                                      namaLengkap,
+                                      email,
+                                      password,
+                                      wStart,
+                                      wEnd,
+                                      bStart,
+                                      bEnd,
+                                    ),
+                                  );
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF00BCD4),

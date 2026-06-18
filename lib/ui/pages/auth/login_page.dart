@@ -11,6 +11,7 @@ import 'package:flextime_mobile/logic/bloc/auth/auth_state.dart';
 import '../dashboard/main_layout.dart';
 import '../admin/admin_main_layout.dart';
 import 'register_page.dart';
+import 'package:flextime_mobile/ui/widgets/custom_error_dialog.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -22,12 +23,17 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _showErrorPopup(String message) {
+    CustomErrorDialog.show(context, message);
   }
 
   @override
@@ -159,9 +165,7 @@ class _LoginPageState extends State<LoginPage> {
                               );
                             }
                           } else if (state is AuthError) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(state.message)),
-                            );
+                            _showErrorPopup(state.message);
                           }
                         },
                         builder: (context, state) {
@@ -195,23 +199,14 @@ class _LoginPageState extends State<LoginPage> {
                                           .trim();
                                       final password = _passwordController.text
                                           .trim();
-
-                                      if (email.isNotEmpty &&
-                                          password.isNotEmpty) {
-                                        context.read<AuthBloc>().add(
-                                          AuthLoginRequested(email, password),
-                                        );
-                                      } else {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Harap isi email/username dan kata sandi.',
-                                            ),
-                                          ),
-                                        );
+                                      if (email.isEmpty || password.isEmpty) {
+                                        _showErrorPopup('Harap isi email/username dan kata sandi.');
+                                        return;
                                       }
+                                      
+                                      context.read<AuthBloc>().add(
+                                        AuthLoginRequested(email, password),
+                                      );
                                     },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors
@@ -317,7 +312,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
           child: TextField(
             controller: controller,
-            obscureText: isPassword,
+            obscureText: isPassword ? _obscurePassword : false,
             style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
             decoration: InputDecoration(
               hintText: hintText,
@@ -331,6 +326,20 @@ class _LoginPageState extends State<LoginPage> {
               ),
               border:
                   InputBorder.none, // Menghilangkan border default TextField
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey[500],
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    )
+                  : null,
             ),
           ),
         ),
