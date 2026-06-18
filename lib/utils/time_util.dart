@@ -2,24 +2,33 @@ import 'package:flutter/material.dart';
 
 class TimeUtil {
   //Mencari jadwal sesi terdekat berikutnya berdasarkan daftar jadwal dari server dan waktu saat ini (TimeOfDay.now())
-  static String getNextSessionTime(List<String> jadwal) {
+  static String getNextSessionTime(List<String> jadwal, List<dynamic> riwayatsToday) {
     String nextSessionTime = '--:--';
     if (jadwal.isNotEmpty) {
       final now = TimeOfDay.now();
       final nowMinutes = now.hour * 60 + now.minute;
 
-      for (String timeStr in jadwal) {
+      for (int i = 0; i < jadwal.length; i++) {
+        final timeStr = jadwal[i];
         final parts = timeStr.split(':');
         if (parts.length >= 2) {
           final timeMin = int.parse(parts[0]) * 60 + int.parse(parts[1]);
           // Pembatas: 1 jam (60 menit) setelah jam yang dijadwalkan
           if ((timeMin + 60) > nowMinutes) {
-            nextSessionTime = timeStr;
-            // Jika formatnya HH:MM:SS, potong menjadi HH:MM
-            if (nextSessionTime.length > 5) {
-              nextSessionTime = nextSessionTime.substring(0, 5);
+            String sessionName = i == 0 ? 'Sesi 1' : (i == 1 ? 'Sesi 2' : 'Sesi 3');
+            bool isDone = riwayatsToday.any((r) => 
+                r.sesi.toLowerCase() == sessionName.toLowerCase() && 
+                r.statusKepatuhan.toLowerCase() == 'melakukan'
+            );
+
+            if (!isDone) {
+              nextSessionTime = timeStr;
+              // Jika formatnya HH:MM:SS, potong menjadi HH:MM
+              if (nextSessionTime.length > 5) {
+                nextSessionTime = nextSessionTime.substring(0, 5);
+              }
+              break; // Ambil jadwal pertama yang belum lewat dan belum selesai
             }
-            break; // Ambil jadwal pertama yang belum lewat
           }
         }
       }
