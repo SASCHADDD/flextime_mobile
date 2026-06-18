@@ -71,4 +71,18 @@ class AuthRepository {
   Future<bool> hasValidSession() async {
     return await storageProvider.hasToken();
   }
+
+  // FUNGSI GET CURRENT USER (Untuk Splash Screen agar mendapatkan role yang benar)
+  Future<UserModel?> getCurrentUser() async {
+    try {
+      final hasToken = await storageProvider.hasToken();
+      if (!hasToken) return null;
+      
+      final responseRaw = await apiProvider.get('/pengguna/me');
+      return UserModel.fromJson(responseRaw['data']);
+    } catch (e) {
+      // Jika token expired atau server error, kita anggap tidak ada sesi
+      return null;
+    }
+  }
 }
