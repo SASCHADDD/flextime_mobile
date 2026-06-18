@@ -16,9 +16,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   // --- LOGIKA CEK SESI (SPLASH SCREEN) ---
   Future<void> _onAuthCheckRequested(AuthCheckRequested event, Emitter<AuthState> emit) async {
-    final hasToken = await authRepository.hasValidSession();
-    if (hasToken) {
-      emit(const AuthAuthenticated()); // Lempar ke Dashboard
+    final user = await authRepository.getCurrentUser();
+    if (user != null) {
+      emit(AuthAuthenticated(user: user)); // Lempar ke Dashboard/Admin sesuai peran
     } else {
       emit(AuthUnauthenticated()); // Lempar ke Login Screen
     }
