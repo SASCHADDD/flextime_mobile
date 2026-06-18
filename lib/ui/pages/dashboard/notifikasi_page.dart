@@ -34,10 +34,23 @@ class NotifikasiPage extends StatelessWidget {
                 } else if (state is NotifikasiLoaded) {
                   final list = state.notifikasi;
                   if (list.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'Belum ada notifikasi',
-                        style: GoogleFonts.inter(color: Colors.white54, fontSize: 16),
+                    return RefreshIndicator(
+                      color: const Color(0xFF00ACC1),
+                      backgroundColor: const Color(0xFF1C1E22),
+                      onRefresh: () async {
+                        context.read<NotifikasiBloc>().add(FetchNotifikasiRequested());
+                      },
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                          Center(
+                            child: Text(
+                              'Belum ada notifikasi',
+                              style: GoogleFonts.inter(color: Colors.white54, fontSize: 16),
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }

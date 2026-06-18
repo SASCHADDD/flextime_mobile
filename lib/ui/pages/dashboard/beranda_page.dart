@@ -117,11 +117,16 @@ class BerandaPage extends StatelessWidget {
           jadwal = penggunaState.user.jadwalMicrobreak;
         }
 
-        // Cari Sesi Selanjutnya menggunakan Utility Class
-        String nextSessionTime = TimeUtil.getNextSessionTime(jadwal);
-
         return BlocBuilder<RiwayatBloc, RiwayatState>(
           builder: (context, riwayatState) {
+            List<dynamic> riwayatsToday = [];
+            if (riwayatState is RiwayatLoaded) {
+              final today = DateTime.now().toIso8601String().split('T')[0];
+              riwayatsToday = riwayatState.riwayatList.where((r) => r.tanggal == today || (r.dibuatPada != null && r.dibuatPada!.startsWith(today))).toList();
+            }
+
+            String nextSessionTime = TimeUtil.getNextSessionTime(jadwal, riwayatsToday);
+
             bool isPagiDone = false;
             bool isSiangDone = false;
             bool isSoreDone = false;

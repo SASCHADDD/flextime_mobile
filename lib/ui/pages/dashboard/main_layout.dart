@@ -1,4 +1,5 @@
 import 'package:flextime_mobile/logic/bloc/auth/auth_event.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -50,12 +51,17 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
+  Timer? _timer;
 
   late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
+    // Memperbarui UI setiap menit agar tombol FlexTime aktif otomatis saat waktunya tiba
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      setState(() {});
+    });
     _pages = [
       BerandaPage(namaPengguna: widget.namaPengguna),
       const LaporanPage(),

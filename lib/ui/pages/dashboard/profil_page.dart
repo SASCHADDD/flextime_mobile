@@ -276,7 +276,7 @@ class _ProfilViewState extends State<_ProfilView> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 100), // spacing bottom nav
+                  const SizedBox(height: 140), // spacing bottom nav yang lebih besar agar tidak terhalang tombol FlexTime
                 ],
               ),
             ),
