@@ -55,12 +55,24 @@ const riwayatService = {
                 const dateFormatter = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Asia/Jakarta' });
                 const todayDateString = dateFormatter.format(currentTime);
 
+                // Cek kapan user mendaftar (dalam menit Jakarta) jika mendaftar hari ini
+                const userRegistrationDateString = dateFormatter.format(pengguna.dibuat_pada);
+                const isUserRegisteredToday = (userRegistrationDateString === todayDateString);
+                let totalRegistrationMinutes = 0;
+                if (isUserRegisteredToday) {
+                    totalRegistrationMinutes = timeUtil.timeToMinutes(timeFormatter.format(pengguna.dibuat_pada));
+                }
+
                 for (let i = 0; i < jadwalList.length; i++) {
                     const scheduleTimeString = jadwalList[i];
                     const totalScheduleMinutes = timeUtil.timeToMinutes(scheduleTimeString);
 
                     // Jika jadwal sudah lewat dari waktu saat ini
                     if (totalCurrentMinutes >= totalScheduleMinutes) {
+                        // Jika user mendaftar hari ini, tapi jam daftarnya melebihi jam sesi ini, jangan catat missed session!
+                        if (isUserRegisteredToday && totalRegistrationMinutes > totalScheduleMinutes) {
+                            continue;
+                        }
                         const sessionName = i === 0 ? 'Sesi 1' : i === 1 ? 'Sesi 2' : 'Sesi 3';
 
                         // Cek apakah riwayat ini sudah ada untuk hari ini

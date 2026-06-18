@@ -1,12 +1,13 @@
 // File: src/utils/timeUtil.js
 
 const timeUtil = {
-    // Helper to convert "HH:mm:ss" or "HH:mm" to total minutes
+    // Helper to convert "HH:mm:ss" or "HH:mm" or "HH.mm" to total minutes
     timeToMinutes: (timeStr) => {
         if (!timeStr) return 0;
-        const parts = timeStr.split(':');
-        const h = parseInt(parts[0]) || 0;
-        const m = parseInt(parts[1]) || 0;
+        // Dukung pemisah titik (.) dan titik dua (:)
+        const parts = timeStr.replace('.', ':').split(':');
+        const h = parseInt(parts[0], 10) || 0;
+        const m = parseInt(parts[1], 10) || 0;
         return h * 60 + m;
     },
 
