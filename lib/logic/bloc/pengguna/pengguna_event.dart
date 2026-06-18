@@ -45,3 +45,5 @@ class FetchAllPenggunaRequested extends PenggunaEvent {
   @override
   List<Object?> get props => [query];
 }
+
+class LoadMorePenggunaRequested extends PenggunaEvent {}
