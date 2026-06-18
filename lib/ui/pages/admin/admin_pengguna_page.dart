@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../logic/bloc/pengguna/pengguna_bloc.dart';
 import '../../../../logic/bloc/pengguna/pengguna_event.dart';
 import '../../../../logic/bloc/pengguna/pengguna_state.dart';
+import '../../widgets/load_more_button.dart';
 import 'admin_laporan_aktivitas_page.dart';
 
 class AdminPenggunaPage extends StatefulWidget {
@@ -98,9 +99,22 @@ class _AdminPenggunaPageState extends State<AdminPenggunaPage> {
                               )
                             : ListView.separated(
                                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 100), // padding bawah untuk menghindari FAB
-                                itemCount: users.length,
+                                itemCount: state.hasReachedMax ? users.length : users.length + 1,
                                 separatorBuilder: (context, index) => const SizedBox(height: 12),
                                 itemBuilder: (context, index) {
+                                  if (index >= users.length) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      child: LoadMoreButton(
+                                        onLoadMore: () async {
+                                          context.read<PenggunaBloc>().add(LoadMorePenggunaRequested());
+                                          // Tunggu sejenak agar UI memperbarui state (optional, tapi bagus utk UX)
+                                          await Future.delayed(const Duration(milliseconds: 500));
+                                        },
+                                      ),
+                                    );
+                                  }
+                                  
                                   final user = users[index];
                                   return Container(
                                     decoration: BoxDecoration(
@@ -113,7 +127,6 @@ class _AdminPenggunaPageState extends State<AdminPenggunaPage> {
                                       leading: CircleAvatar(
                                         radius: 24,
                                         backgroundColor: const Color(0xFF00ACC1).withValues(alpha: 0.2),
-                                        // Dalam skenario ideal, kita akan menampilkan foto profil pengguna jika ada
                                         child: Text(
                                           user.namaLengkap.isNotEmpty ? user.namaLengkap[0].toUpperCase() : '?',
                                           style: GoogleFonts.inter(

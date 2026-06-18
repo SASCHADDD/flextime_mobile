@@ -1,3 +1,4 @@
+import 'package:flextime_mobile/ui/widgets/daily_riwayat_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -150,7 +151,23 @@ class AdminLaporanAktivitasPage extends StatelessWidget {
                     children: groupedRiwayat.entries.map((entry) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
-                        child: _buildSessionCard(_formatTanggal(entry.key), entry.value),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _formatTanggal(entry.key),
+                              style: GoogleFonts.inter(
+                                color: Colors.grey[500],
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            DailyRiwayatCard(sessions: entry.value),
+                            const SizedBox(height: 8),
+                          ],
+                        ),
                       );
                     }).toList(),
                   );
@@ -181,72 +198,5 @@ class AdminLaporanAktivitasPage extends StatelessWidget {
       final months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
       return '${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}';
     }
-  }
-
-  Widget _buildSessionCard(String title, List<RiwayatModel> riwayats) {
-    final pagi = riwayats.any((r) => (r.sesi.toLowerCase() == 'pagi' || r.sesi.toLowerCase() == 'sesi 1') && r.statusKepatuhan.toLowerCase() == 'melakukan');
-    final siang = riwayats.any((r) => (r.sesi.toLowerCase() == 'siang' || r.sesi.toLowerCase() == 'sesi 2') && r.statusKepatuhan.toLowerCase() == 'melakukan');
-    final sore = riwayats.any((r) => (r.sesi.toLowerCase() == 'sore' || r.sesi.toLowerCase() == 'sesi 3') && r.statusKepatuhan.toLowerCase() == 'melakukan');
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1C20),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildSessionPill('Pagi', pagi),
-              _buildSessionPill('Siang', siang),
-              _buildSessionPill('Sore', sore),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSessionPill(String label, bool isCompleted) {
-    final color = isCompleted ? const Color(0xFF00ACC1) : Colors.grey[800]!;
-    final textColor = isCompleted ? const Color(0xFF00ACC1) : Colors.grey[600]!;
-    final icon = isCompleted ? Icons.check_circle_outline_rounded : Icons.cancel_outlined;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF121418),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: textColor, size: 20),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              color: textColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

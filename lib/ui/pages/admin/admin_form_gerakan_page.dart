@@ -9,6 +9,8 @@ import '../../../../data/providers/api_provider.dart';
 import '../../../../logic/bloc/gerakan/gerakan_bloc.dart';
 import '../../../../logic/bloc/gerakan/gerakan_event.dart';
 import '../../../../logic/bloc/gerakan/gerakan_state.dart';
+import '../../widgets/custom_error_dialog.dart';
+import '../../widgets/custom_success_dialog.dart';
 
 class AdminFormGerakanPage extends StatefulWidget {
   final GerakanModel? gerakan; // Null jika nambah baru, ada isi jika edit
@@ -22,7 +24,7 @@ class AdminFormGerakanPage extends StatefulWidget {
 class _AdminFormGerakanPageState extends State<AdminFormGerakanPage> {
   final _formKey = GlobalKey<FormState>();
   final _namaController = TextEditingController();
-  final _deskripsiController = TextEditingController();
+  final List<TextEditingController> _deskripsiControllers = [];
   final _durasiController = TextEditingController();
 
   File? _selectedImage;
@@ -33,17 +35,42 @@ class _AdminFormGerakanPageState extends State<AdminFormGerakanPage> {
     super.initState();
     if (widget.gerakan != null) {
       _namaController.text = widget.gerakan!.namaGerakan;
-      _deskripsiController.text = widget.gerakan!.deskripsi;
       _durasiController.text = widget.gerakan!.durasiDetik.toString();
+      
+      if (widget.gerakan!.deskripsi.isNotEmpty) {
+        final lines = widget.gerakan!.deskripsi.split('\n');
+        for (var line in lines) {
+          _deskripsiControllers.add(TextEditingController(text: line));
+        }
+      } else {
+        _deskripsiControllers.add(TextEditingController());
+      }
+    } else {
+      _deskripsiControllers.add(TextEditingController());
     }
   }
 
   @override
   void dispose() {
     _namaController.dispose();
-    _deskripsiController.dispose();
+    for (var controller in _deskripsiControllers) {
+      controller.dispose();
+    }
     _durasiController.dispose();
     super.dispose();
+  }
+
+  void _addDeskripsiField() {
+    setState(() {
+      _deskripsiControllers.add(TextEditingController());
+    });
+  }
+
+  void _removeDeskripsiField(int index) {
+    setState(() {
+      _deskripsiControllers[index].dispose();
+      _deskripsiControllers.removeAt(index);
+    });
   }
 
   Future<void> _pickImage() async {
@@ -58,20 +85,22 @@ class _AdminFormGerakanPageState extends State<AdminFormGerakanPage> {
   void _submit() {
     if (_formKey.currentState!.validate()) {
       if (widget.gerakan == null && _selectedImage == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gambar wajib diisi untuk gerakan baru!'), backgroundColor: Colors.red),
-        );
+        CustomErrorDialog.show(context, 'Gambar wajib diisi untuk gerakan baru!');
         return;
       }
 
       final isEdit = widget.gerakan != null;
+      final deskripsiJoined = _deskripsiControllers
+          .map((c) => c.text.trim())
+          .where((text) => text.isNotEmpty)
+          .join('\n');
 
       if (isEdit) {
         context.read<GerakanBloc>().add(
               UpdateGerakan(
                 id: widget.gerakan!.id,
                 namaGerakan: _namaController.text.trim(),
-                deskripsi: _deskripsiController.text.trim(),
+                deskripsi: deskripsiJoined,
                 durasiDetik: int.tryParse(_durasiController.text.trim()) ?? 60,
                 gambar: _selectedImage, // Optional if edit
               ),
@@ -80,7 +109,7 @@ class _AdminFormGerakanPageState extends State<AdminFormGerakanPage> {
         context.read<GerakanBloc>().add(
               AddGerakan(
                 namaGerakan: _namaController.text.trim(),
-                deskripsi: _deskripsiController.text.trim(),
+                deskripsi: deskripsiJoined,
                 durasiDetik: int.tryParse(_durasiController.text.trim()) ?? 60,
                 gambar: _selectedImage!, // Mandatory if new
               ),
@@ -109,13 +138,14 @@ class _AdminFormGerakanPageState extends State<AdminFormGerakanPage> {
         ),
       ),
       body: BlocConsumer<GerakanBloc, GerakanState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is GerakanOperationSuccess) {
-            Navigator.pop(context); // Kembali ke list setelah sukses
+            await CustomSuccessDialog.show(context, state.message);
+            if (context.mounted) {
+              Navigator.pop(context); // Kembali ke list setelah dialog ditutup
+            }
           } else if (state is GerakanError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-            );
+            CustomErrorDialog.show(context, state.message);
           }
         },
         builder: (context, state) {
@@ -130,22 +160,22 @@ class _AdminFormGerakanPageState extends State<AdminFormGerakanPage> {
                   GestureDetector(
                     onTap: _pickImage,
                     child: Container(
-                      height: 200,
+                      height: 220,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1A1C20),
-                        borderRadius: BorderRadius.circular(16),
+                        color: const Color(0xFF121418),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                         image: _selectedImage != null
                             ? DecorationImage(
                                 image: FileImage(_selectedImage!),
-                                fit: BoxFit.cover,
+                                fit: BoxFit.contain,
                               )
                             : (isEdit && widget.gerakan!.gambar != null && widget.gerakan!.gambar!.isNotEmpty)
                                 ? DecorationImage(
                                     image: NetworkImage(
                                       '${ApiProvider.baseUrl.replaceAll('/api', '')}${widget.gerakan!.gambar}',
                                     ),
-                                    fit: BoxFit.cover,
+                                    fit: BoxFit.contain,
                                   )
                                 : null,
                       ),
@@ -175,13 +205,55 @@ class _AdminFormGerakanPageState extends State<AdminFormGerakanPage> {
                     icon: Icons.title_rounded,
                   ),
                   const SizedBox(height: 24),
-                  _buildInputField(
-                    controller: _deskripsiController,
-                    label: 'Deskripsi',
-                    hint: 'Misal: Miringkan kepala ke kanan dan ke kiri...',
-                    icon: Icons.description_rounded,
-                    maxLines: 4,
+                  
+                  // --- Deskripsi Dinamis ---
+                  Text(
+                    'Langkah-langkah Gerakan',
+                    style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16),
                   ),
+                  const SizedBox(height: 12),
+                  ...List.generate(_deskripsiControllers.length, (index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _buildInputField(
+                              controller: _deskripsiControllers[index],
+                              label: 'Langkah ${index + 1}',
+                              hint: 'Deskripsikan langkah ke-${index + 1}...',
+                              icon: Icons.format_list_numbered_rounded,
+                              maxLines: 2,
+                            ),
+                          ),
+                          if (_deskripsiControllers.length > 1)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8.0, top: 8.0),
+                              child: IconButton(
+                                icon: const Icon(Icons.remove_circle_outline_rounded, color: Colors.redAccent),
+                                onPressed: () => _removeDeskripsiField(index),
+                                tooltip: 'Hapus langkah ini',
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  }),
+                  
+                  // Tombol Tambah Langkah
+                  OutlinedButton.icon(
+                    onPressed: _addDeskripsiField,
+                    icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
+                    label: Text('Tambah Langkah', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF00ACC1),
+                      side: const BorderSide(color: Color(0xFF00ACC1)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                  
                   const SizedBox(height: 24),
                   _buildInputField(
                     controller: _durasiController,

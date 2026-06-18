@@ -1,3 +1,4 @@
+import 'package:flextime_mobile/logic/bloc/gerakan/gerakan_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -5,7 +6,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../data/providers/api_provider.dart';
 import '../../../../logic/bloc/gerakan/gerakan_bloc.dart';
 import '../../../../logic/bloc/gerakan/gerakan_event.dart';
-import '../../../../logic/bloc/gerakan/gerakan_state.dart';
+import '../../widgets/admin_gerakan_card.dart';
+import '../../widgets/gerakan_detail_modal.dart';
+import '../../widgets/custom_error_dialog.dart';
+import '../../widgets/custom_success_dialog.dart';
 import 'admin_form_gerakan_page.dart';
 
 class AdminGerakanPage extends StatelessWidget {
@@ -63,13 +67,13 @@ class _AdminGerakanView extends StatelessWidget {
       body: BlocConsumer<GerakanBloc, GerakanState>(
         listener: (context, state) {
           if (state is GerakanOperationSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: Colors.green),
-            );
+            if (ModalRoute.of(context)?.isCurrent == true) {
+              CustomSuccessDialog.show(context, state.message);
+            }
           } else if (state is GerakanError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-            );
+            if (ModalRoute.of(context)?.isCurrent == true) {
+              CustomErrorDialog.show(context, state.message);
+            }
           }
         },
         builder: (context, state) {
@@ -101,164 +105,38 @@ class _AdminGerakanView extends StatelessWidget {
                     ? '${ApiProvider.baseUrl.replaceAll('/api', '')}${gerakan.gambar}'
                     : null;
 
-                return Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1C20),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                  ),
-                  child: ListTile(
-                    onTap: () {
-                      showModalBottomSheet(
-                        context: context,
-                        backgroundColor: const Color(0xFF1A1C20),
-                        isScrollControlled: true,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                        ),
-                        builder: (context) {
-                          return Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Center(
-                                  child: Container(
-                                    width: 40,
-                                    height: 4,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[700],
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                if (imageUrl != null)
-                                  Container(
-                                    height: 200,
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16),
-                                      image: DecorationImage(
-                                        image: NetworkImage(imageUrl),
-                                        fit: BoxFit.contain, // Ubah dari cover ke contain agar tidak terpotong
-                                      ),
-                                    ),
-                                  ),
-                                if (imageUrl != null) const SizedBox(height: 24),
-                                Text(
-                                  gerakan.namaGerakan,
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.timer_outlined, color: Color(0xFF00ACC1), size: 18),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '${gerakan.durasiDetik} detik',
-                                      style: GoogleFonts.inter(color: const Color(0xFF00ACC1), fontSize: 14, fontWeight: FontWeight.w600),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Deskripsi',
-                                  style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14, fontWeight: FontWeight.w600),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  gerakan.deskripsi,
-                                  style: GoogleFonts.inter(color: Colors.grey[300], fontSize: 15, height: 1.5),
-                                ),
-                                const SizedBox(height: 32),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    },
-                    contentPadding: const EdgeInsets.all(12),
-                    leading: Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
-                        borderRadius: BorderRadius.circular(12),
-                        image: imageUrl != null
-                            ? DecorationImage(
-                                image: NetworkImage(imageUrl),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
+                return AdminGerakanCard(
+                  gerakan: gerakan,
+                  imageUrl: imageUrl,
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: const Color(0xFF1A1C20),
+                      isScrollControlled: true,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                       ),
-                      child: imageUrl == null
-                          ? const Icon(Icons.image_not_supported_rounded, color: Colors.grey)
-                          : null,
-                    ),
-                    title: Text(
-                      gerakan.namaGerakan,
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
+                      builder: (context) {
+                        return GerakanDetailModal(
+                          gerakan: gerakan,
+                          imageUrl: imageUrl,
+                        );
+                      },
+                    );
+                  },
+                  onEdit: () {
+                    final gerakanBloc = context.read<GerakanBloc>();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider.value(
+                          value: gerakanBloc,
+                          child: AdminFormGerakanPage(gerakan: gerakan),
+                        ),
                       ),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.timer_outlined, color: Colors.grey, size: 14),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${gerakan.durasiDetik} detik',
-                              style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 12),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          gerakan.deskripsi,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
-                            color: Colors.grey[500],
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit_rounded, color: Color(0xFF00ACC1)),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => BlocProvider.value(
-                                  value: context.read<GerakanBloc>(),
-                                  child: AdminFormGerakanPage(gerakan: gerakan),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_rounded, color: Colors.redAccent),
-                          onPressed: () => _showDeleteDialog(context, gerakan.id, gerakan.namaGerakan),
-                        ),
-                      ],
-                    ),
-                  ),
+                    );
+                  },
+                  onDelete: () => _showDeleteDialog(context, gerakan.id, gerakan.namaGerakan),
                 );
               },
             );

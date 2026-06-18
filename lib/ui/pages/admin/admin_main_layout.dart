@@ -89,12 +89,8 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
               backgroundColor: const Color(0xFF121418),
               appBar: AppBar(
                 backgroundColor: const Color(0xFF1A1C20),
-                leading: Builder(
-                  builder: (context) => IconButton(
-                    icon: const Icon(Icons.menu_rounded, color: Colors.white),
-                    onPressed: () => Scaffold.of(context).openDrawer(),
-                  ),
-                ),
+                leading: null,
+                automaticallyImplyLeading: false,
                 title: Text(
                   _currentIndex == 0 ? 'Admin Gerakan' : 'Kelola Pengguna',
                   style: GoogleFonts.inter(
@@ -108,54 +104,30 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                 actions: [
                   Container(
                     margin: const EdgeInsets.only(right: 16),
-                    child: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: const Color(0xFF00ACC1).withValues(alpha: 0.2),
-                      child: const Icon(Icons.person, size: 20, color: Color(0xFF00ACC1)),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: const Color(0xFF00ACC1).withValues(alpha: 0.2),
+                          child: const Icon(Icons.person, size: 20, color: Color(0xFF00ACC1)),
+                        ),
+                        const SizedBox(width: 12),
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 24),
+                          onPressed: () {
+                            context.read<AuthBloc>().add(AuthLogoutRequested());
+                          },
+                        ),
+                      ],
                     ),
                   )
                 ],
               ),
-              drawer: Drawer(
-                backgroundColor: const Color(0xFF1A1C20),
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    DrawerHeader(
-                      decoration: const BoxDecoration(color: Color(0xFF121418)),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Color(0xFF00ACC1),
-                            child: Icon(Icons.admin_panel_settings_rounded, color: Colors.white, size: 30),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            widget.namaPengguna,
-                            style: GoogleFonts.inter(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
-                          ),
-                          Text(
-                            'Administrator',
-                            style: GoogleFonts.inter(color: const Color(0xFF00ACC1), fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-                      title: Text('Logout', style: GoogleFonts.inter(color: Colors.redAccent)),
-                      onTap: () {
-                        context.read<AuthBloc>().add(AuthLogoutRequested());
-                      },
-                    ),
-                  ],
-                ),
-              ),
               body: _pages[_currentIndex],
               floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-              floatingActionButton: Container(
+              floatingActionButton: _currentIndex == 0 ? Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   boxShadow: [
@@ -171,26 +143,20 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                   backgroundColor: const Color(0xFF00ACC1),
                   child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
                   onPressed: () {
-                    if (_currentIndex == 0) {
-                      // Tambah Gerakan
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (navContext) => BlocProvider.value(
-                            value: context.read<GerakanBloc>(),
-                            child: const AdminFormGerakanPage(),
-                          ),
+                    // Tambah Gerakan
+                    final gerakanBloc = context.read<GerakanBloc>();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (navContext) => BlocProvider.value(
+                          value: gerakanBloc,
+                          child: const AdminFormGerakanPage(),
                         ),
-                      );
-                    } else {
-                      // Tambah Pengguna (Belum diimplementasikan)
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Fitur tambah pengguna dalam pengembangan')),
-                      );
-                    }
+                      ),
+                    );
                   },
                 ),
-              ),
+              ) : null,
               bottomNavigationBar: Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A1C20),
