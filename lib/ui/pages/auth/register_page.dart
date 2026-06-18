@@ -385,45 +385,53 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
           child: TextField(
             controller: controller,
-            keyboardType: isTime ? TextInputType.number : TextInputType.text,
-            inputFormatters: isTime ? [TimeTextInputFormatter()] : null,
+            readOnly: isTime,
+            onTap: isTime ? () async {
+              TimeOfDay initialTime = TimeOfDay.now();
+              if (controller.text.isNotEmpty && controller.text.contains(':')) {
+                final parts = controller.text.split(':');
+                if (parts.length >= 2) {
+                  initialTime = TimeOfDay(
+                    hour: int.tryParse(parts[0]) ?? initialTime.hour,
+                    minute: int.tryParse(parts[1]) ?? initialTime.minute,
+                  );
+                }
+              }
+              
+              final TimeOfDay? picked = await showTimePicker(
+                context: context,
+                initialTime: initialTime,
+                builder: (context, child) {
+                  return Theme(
+                    data: ThemeData.dark().copyWith(
+                      colorScheme: const ColorScheme.dark(
+                        primary: Color(0xFF00ACC1),
+                        surface: Color(0xFF1C1E22),
+                      ),
+                    ),
+                    child: child!,
+                  );
+                },
+              );
+              
+              if (picked != null) {
+                final h = picked.hour.toString().padLeft(2, '0');
+                final m = picked.minute.toString().padLeft(2, '0');
+                controller.text = '$h:$m';
+              }
+            } : null,
+            keyboardType: isTime ? TextInputType.none : TextInputType.text,
             style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
             decoration: InputDecoration(
               hintText: isTime ? '00:00' : null,
               hintStyle: GoogleFonts.inter(color: Colors.grey[600], fontSize: 14),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               border: InputBorder.none,
+              suffixIcon: isTime ? Icon(Icons.access_time_rounded, color: Colors.grey[500], size: 20) : null,
             ),
           ),
         ),
       ],
-    );
-  }
-}
-
-class TimeTextInputFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    // Hanya ambil angka
-    String newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-
-    // Batasi maksimal 4 digit angka (HH:MM)
-    if (newText.length > 4) {
-      newText = newText.substring(0, 4);
-    }
-
-    String formattedText = '';
-    for (int i = 0; i < newText.length; i++) {
-      if (i == 2) {
-        formattedText += ':';
-      }
-      formattedText += newText[i];
-    }
-
-    return TextEditingValue(
-      text: formattedText,
-      selection: TextSelection.collapsed(offset: formattedText.length),
     );
   }
 }
