@@ -1,6 +1,8 @@
 // File: src/services/riwayatService.js
 const RiwayatKepatuhan = require('../models/riwayatmodel');
 const Gerakan = require('../models/GerakanModel'); // Sesuaikan huruf besar/kecil dengan nama file Anda
+const Pengguna = require('../models/PenggunaModel');
+const timeUtil = require('../utils/timeUtil');
 
 const riwayatService = {
     // [USER] Menyimpan riwayat baru ke MySQL
@@ -34,6 +36,62 @@ const riwayatService = {
     // [USER] Menarik riwayat milik sendiri
     getRiwayatKu: async (idPengguna) => {
         try {
+            // [LAZY CREATION] Catat otomatis sesi yang terlewat (Missed Session) untuk HARI INI
+            const pengguna = await Pengguna.findByPk(idPengguna);
+            if (pengguna) {
+                const jadwalList = timeUtil.calculateMicrobreaks(
+                    pengguna.jam_masuk_kerja,
+                    pengguna.jam_keluar_kerja,
+                    pengguna.jam_mulai_istirahat,
+                    pengguna.jam_selesai_istirahat
+                );
+
+                const currentTime = new Date();
+                const timeFormatter = new Intl.DateTimeFormat('id-ID', {
+                    timeZone: 'Asia/Jakarta',
+                    hour: '2-digit', minute: '2-digit', hour12: false
+                });
+                const totalCurrentMinutes = timeUtil.timeToMinutes(timeFormatter.format(currentTime));
+                const dateFormatter = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Asia/Jakarta' });
+                const todayDateString = dateFormatter.format(currentTime);
+
+                for (let i = 0; i < jadwalList.length; i++) {
+                    const scheduleTimeString = jadwalList[i];
+                    const totalScheduleMinutes = timeUtil.timeToMinutes(scheduleTimeString);
+
+                    // Jika jadwal sudah lewat dari waktu saat ini
+                    if (totalCurrentMinutes >= totalScheduleMinutes) {
+                        const sessionName = i === 0 ? 'Sesi 1' : i === 1 ? 'Sesi 2' : 'Sesi 3';
+
+                        // Cek apakah riwayat ini sudah ada untuk hari ini
+                        const existingRiwayat = await RiwayatKepatuhan.findOne({
+                            where: { 
+                                pengguna_id: idPengguna, 
+                                sesi: sessionName,
+                                tanggal: todayDateString
+                            }
+                        });
+
+                        if (!existingRiwayat) {
+                            // Hitung waktu jadwal sebenarnya
+                            const scheduleDate = new Date(currentTime);
+                            const scheduleParts = scheduleTimeString.split(':');
+                            if (scheduleParts.length >= 2) {
+                                scheduleDate.setHours(parseInt(scheduleParts[0], 10), parseInt(scheduleParts[1], 10), 0, 0);
+                            }
+
+                            await RiwayatKepatuhan.create({
+                                pengguna_id: idPengguna,
+                                tanggal: todayDateString,
+                                sesi: sessionName,
+                                status_kepatuhan: 'Tidak',
+                                dibuat_pada: scheduleDate
+                            });
+                        }
+                    }
+                }
+            }
+
             return await RiwayatKepatuhan.findAll({
                 where: { pengguna_id: idPengguna },
                 order: [['dibuat_pada', 'DESC']]
