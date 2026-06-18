@@ -32,7 +32,7 @@ class UserModel extends Equatable {
       jamKeluarKerja: json['jam_keluar_kerja'] ?? '17:00:00',
       jamMulaiIstirahat: json['jam_mulai_istirahat'] ?? '12:00:00',
       jamSelesaiIstirahat: json['jam_selesai_istirahat'] ?? '13:00:00',
-      peran: json['peran'] ?? 'user',
+      peran: json['peran'] ?? json['role'] ?? 'user',
       jadwalMicrobreak: (json['jadwal_microbreak'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
