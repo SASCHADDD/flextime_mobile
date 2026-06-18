@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../utils/snackbar_util.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -47,9 +48,7 @@ class CustomBottomNavBar extends StatelessWidget {
             top: -24,
             child: GestureDetector(
               onTap: isFlexTimeButtonActive ? onCenterButtonTap : () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Belum waktunya FlexTime atau Sesi sudah selesai!')),
-                );
+                SnackBarUtil.showWarning(context, 'Belum waktunya FlexTime atau Sesi sudah selesai!');
               },
               child: Column(
                 children: [
