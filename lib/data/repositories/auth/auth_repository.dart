@@ -47,10 +47,10 @@ class AuthRepository {
       'nama_lengkap': namaLengkap, 
       'email': email,
       'kata_sandi': password,
-      'waktu_mulai_kerja': waktuMulaiKerja,
-      'waktu_selesai_kerja': waktuSelesaiKerja,
-      'waktu_mulai_istirahat': waktuMulaiIstirahat,
-      'waktu_selesai_istirahat': waktuSelesaiIstirahat,
+      'jam_masuk_kerja': waktuMulaiKerja,
+      'jam_keluar_kerja': waktuSelesaiKerja,
+      'jam_mulai_istirahat': waktuMulaiIstirahat,
+      'jam_selesai_istirahat': waktuSelesaiIstirahat,
     });
   }
 
