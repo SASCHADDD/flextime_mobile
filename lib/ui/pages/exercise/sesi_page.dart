@@ -42,9 +42,21 @@ class FlexTimeScreen extends StatelessWidget {
                 return _buildLayarPersiapan(context, state.sisaWaktu, "Selanjutnya:\n${state.gerakanSelanjutnya.namaGerakan}");
               } else if (state is SesiLatihanInitial) {
                 return const Center(child: CircularProgressIndicator(color: Color(0xFF00E5FF)));
+              } else if (state is SesiSelesai) {
+                // Ketika selesai, tampilkan layar kosong yang elegan sebelum modal muncul
+                return const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.emoji_events_rounded, color: Color(0xFF00E5FF), size: 100),
+                      SizedBox(height: 24),
+                      Text("Kerja Bagus!", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                );
               }
 
-              return const Center(child: Text("Sesi Dibatalkan", style: TextStyle(color: Colors.white)));
+              return const Center(child: Text("Sesi Dibatalkan", style: TextStyle(color: Colors.grey)));
             },
           ),
         ),
@@ -56,42 +68,48 @@ class FlexTimeScreen extends StatelessWidget {
     String titleText = gerakan.namaGerakan;
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 20),
-        // Judul
-        Text(
-          titleText,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 50),
         
-        // Custom segmented timer
-        Center(
-          child: SizedBox(
-            width: 220,
-            height: 220,
-            child: CustomPaint(
-              painter: TimerPainter(),
-              child: Center(
-                child: Text(
-                  "00:${sisaWaktu.toString().padLeft(2, '0')}",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 56,
-                    fontWeight: FontWeight.w900,
+        // Timer Ring (Kecil) dan Judul di sebelahnya
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 90,
+                height: 90,
+                child: CustomPaint(
+                  painter: TimerPainter(),
+                  child: Center(
+                    child: Text(
+                      "00:${sisaWaktu.toString().padLeft(2, '0')}",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: Text(
+                  titleText,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         
-        const SizedBox(height: 50),
+        const SizedBox(height: 30),
 
         // Expanded content (Image & Instructions)
         Expanded(
@@ -99,24 +117,31 @@ class FlexTimeScreen extends StatelessWidget {
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                // Gambar
+                // Gambar (Lebih Besar)
                 if (gerakan.gambar != null && gerakan.gambar!.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Image.network(
-                      gerakan.gambar!.startsWith('http') 
-                          ? gerakan.gambar! 
-                          : 'http://127.0.0.1:3000/${gerakan.gambar!.replaceFirst(RegExp(r'^/+'), '')}',
-                      width: 200,
-                      height: 200,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 24),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A1C20),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Image.network(
+                        gerakan.gambar!.startsWith('http') 
+                            ? gerakan.gambar! 
+                            : 'http://127.0.0.1:3000/${gerakan.gambar!.replaceFirst(RegExp(r'^/+'), '')}',
+                        width: double.infinity,
+                        height: 300,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(),
+                      ),
                     ),
                   )
                 else
                   _buildImagePlaceholder(),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 24),
 
                 // Instruksi List (Card abu-abu gelap)
                 if (gerakan.deskripsi.isNotEmpty)
@@ -200,8 +225,9 @@ class FlexTimeScreen extends StatelessWidget {
 
   Widget _buildImagePlaceholder() {
     return Container(
-      width: 200,
-      height: 200,
+      width: double.infinity,
+      height: 300,
+      margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
         color: const Color(0xFF1A1C20),
         borderRadius: BorderRadius.circular(24),
