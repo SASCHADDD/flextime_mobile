@@ -40,7 +40,7 @@ class BerandaPage extends StatelessWidget {
             _buildDashboardStats(context),
             const SizedBox(height: 16),
             Builder(builder: (context) => _buildTipsCard(context)),
-            const SizedBox(height: 100), // spacing for bottom nav
+            const SizedBox(height: 160), // Padded extra for the large floating button
           ],
         ),
       ),
@@ -136,7 +136,7 @@ class BerandaPage extends StatelessWidget {
               isSoreDone = riwayatsToday.any((r) => (r.sesi.toLowerCase() == 'sore' || r.sesi.toLowerCase() == 'sesi 3') && r.statusKepatuhan.toLowerCase() == 'melakukan');
 
               // missedCount calculation (overall)
-              missedCount = riwayatState.riwayatList.where((r) => r.statusKepatuhan.toLowerCase() == 'terlewat').length;
+              missedCount = riwayatState.riwayatList.where((r) => r.statusKepatuhan.toLowerCase() == 'tidak').length;
             }
 
             return Column(

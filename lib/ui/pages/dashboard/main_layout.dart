@@ -28,6 +28,7 @@ import 'package:flextime_mobile/logic/bloc/notifikasi/notifikasi_event.dart';
 import 'package:flextime_mobile/logic/bloc/sesi/sesi_bloc.dart';
 import 'package:flextime_mobile/logic/bloc/sesi/sesi_event.dart';
 import 'package:flextime_mobile/ui/pages/exercise/sesi_page.dart';
+import 'package:flextime_mobile/utils/snackbar_util.dart';
 
 import '../../widgets/custom_bottom_nav_bar.dart';
 import 'beranda_page.dart';
@@ -206,18 +207,12 @@ class _MainLayoutState extends State<MainLayout> {
                                   ),
                                 );
                               } else if (gerakanState is GerakanLoading) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Sedang memuat data gerakan...')),
-                                );
+                                SnackBarUtil.showInfo(context, 'Sedang memuat data gerakan...');
                               } else if (gerakanState is GerakanError) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Gagal memuat gerakan: ${gerakanState.message}')),
-                                );
+                                SnackBarUtil.showError(context, 'Gagal memuat gerakan: ${gerakanState.message}');
                                 context.read<GerakanBloc>().add(FetchGerakanRequested());
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Belum ada gerakan tersedia untuk saat ini.')),
-                                );
+                                SnackBarUtil.showWarning(context, 'Belum ada gerakan tersedia untuk saat ini.');
                               }
                             },
                           );

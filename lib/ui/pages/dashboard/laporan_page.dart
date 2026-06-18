@@ -1,10 +1,13 @@
+import 'package:flextime_mobile/logic/bloc/riwayat/riwayat_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:flextime_mobile/logic/bloc/riwayat/riwayat_bloc.dart';
 import 'package:flextime_mobile/logic/bloc/riwayat/riwayat_event.dart';
-import 'package:flextime_mobile/logic/bloc/riwayat/riwayat_state.dart';
+import 'package:flextime_mobile/utils/time_util.dart';
+import 'package:flextime_mobile/ui/widgets/daily_riwayat_card.dart';
+import 'package:flextime_mobile/ui/widgets/load_more_button.dart';
 
 class LaporanPage extends StatefulWidget {
   const LaporanPage({super.key});
@@ -15,6 +18,7 @@ class LaporanPage extends StatefulWidget {
 
 class _LaporanPageState extends State<LaporanPage> {
   int _selectedFilterIndex = 0; // 0: Harian, 1: Mingguan, 2: Bulanan
+  int _paginationLimit = 5; // Batas paginasi awal (menampilkan 5 hari terakhir)
 
   @override
   Widget build(BuildContext context) {
@@ -31,9 +35,7 @@ class _LaporanPageState extends State<LaporanPage> {
             
             Builder(builder: (context) => _buildRiwayatContent(context)),
             
-            const SizedBox(height: 48),
-            _buildLoadMoreButton(),
-            const SizedBox(height: 100), // spacing for bottom nav
+            const SizedBox(height: 160), // spacing for bottom nav
           ],
         ),
       ),
@@ -78,36 +80,48 @@ class _LaporanPageState extends State<LaporanPage> {
           }
 
           // Group by date
-          final Map<String, List<Widget>> groupedWidgets = {};
+          final Map<String, List<dynamic>> groupedData = {};
           
           for (var riwayat in riwayatList) {
             final dateStr = riwayat.dibuatPada ?? '';
             final label = _formatDateLabel(dateStr);
             
-            if (!groupedWidgets.containsKey(label)) {
-              groupedWidgets[label] = [];
+            if (!groupedData.containsKey(label)) {
+              groupedData[label] = [];
             }
-            
-            groupedWidgets[label]!.add(
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: _buildSessionCard(
-                  title: riwayat.sesi,
-                  time: _formatTime(dateStr),
-                  isCompleted: riwayat.statusKepatuhan == 'Ya' || riwayat.statusKepatuhan.toLowerCase() == 'selesai',
-                  missedLabel: riwayat.statusKepatuhan == 'Tidak' ? 'Dilewatkan' : null,
-                ),
-              ),
-            );
+            groupedData[label]!.add(riwayat);
           }
 
           final List<Widget> finalWidgets = [];
-          groupedWidgets.forEach((label, widgets) {
+          
+          // Pagination: Ambil hanya sejumlah limit dari entry hari yang ada
+          final entries = groupedData.entries.toList();
+          final paginatedEntries = entries.take(_paginationLimit).toList();
+
+          for (var entry in paginatedEntries) {
+            final label = entry.key;
+            final sessions = entry.value;
+
             finalWidgets.add(_buildDateLabel(label));
             finalWidgets.add(const SizedBox(height: 16));
-            finalWidgets.addAll(widgets);
-            finalWidgets.add(const SizedBox(height: 16));
-          });
+            finalWidgets.add(DailyRiwayatCard(sessions: sessions));
+            finalWidgets.add(const SizedBox(height: 24));
+          }
+
+          // Tombol Load More
+          if (entries.length > _paginationLimit) {
+             finalWidgets.add(
+               LoadMoreButton(
+                 onLoadMore: () async {
+                   // Beri sedikit jeda agar terasa natural/halus
+                   await Future.delayed(const Duration(milliseconds: 600));
+                   setState(() {
+                     _paginationLimit += 5; // Tampilkan 5 hari lagi
+                   });
+                 },
+               ),
+             );
+          }
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -164,28 +178,6 @@ class _LaporanPageState extends State<LaporanPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1C1E22),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.05),
-              width: 1,
-            ),
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.calendar_today_outlined,
-              color: Colors.white70,
-              size: 20,
-            ),
-            onPressed: () {
-              // Aksi pilih tanggal
-            },
-          ),
-        ),
       ],
     );
   }
@@ -230,6 +222,7 @@ class _LaporanPageState extends State<LaporanPage> {
         if (!isActive) {
           setState(() {
             _selectedFilterIndex = index;
+            _paginationLimit = 5; // Reset limit saat pindah tab
           });
           context.read<RiwayatBloc>().add(FetchRiwayatRequested(filter: filterValue));
         }
@@ -355,47 +348,4 @@ class _LaporanPageState extends State<LaporanPage> {
     );
   }
 
-  Widget _buildLoadMoreButton() {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C1E22),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.03),
-          width: 1,
-        ),
-      ),
-      child: TextButton(
-        onPressed: () {
-          // Aksi muat lebih banyak
-        },
-        style: TextButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Muat Lebih Banyak',
-              style: GoogleFonts.inter(
-                color: Colors.grey[400],
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: Colors.grey[400],
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -4,9 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../logic/bloc/auth/auth_bloc.dart';
 import '../../../../logic/bloc/auth/auth_event.dart';
+import '../../../../logic/bloc/auth/auth_state.dart';
 import '../../../../logic/bloc/pengguna/pengguna_bloc.dart';
 import '../../../../logic/bloc/pengguna/pengguna_event.dart';
 import '../../../../logic/bloc/pengguna/pengguna_state.dart';
+import '../../../../utils/snackbar_util.dart';
 import '../../widgets/custom_time_picker.dart';
 
 class ProfilPage extends StatelessWidget {
@@ -69,19 +71,9 @@ class _ProfilViewState extends State<_ProfilView> {
     return BlocConsumer<PenggunaBloc, PenggunaState>(
       listener: (context, state) {
         if (state is PenggunaUpdateSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profil berhasil diperbarui'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          SnackBarUtil.showSuccess(context, 'Profil berhasil diperbarui');
         } else if (state is PenggunaError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.red,
-            ),
-          );
+          SnackBarUtil.showError(context, state.message);
         }
       },
       builder: (context, state) {
